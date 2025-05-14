@@ -31,17 +31,16 @@ class FlappyBirdGame
   /*
   Muestra instrucciones en pantalla.
   */
-  // method void displayInstructions()
-  // {
-  //   do Output.moveCursor(0, 0);
-  //   do Output.printString("Flappy Bird Simple");
-  //   do Output.println();
-  //   do Output.printString("Espacio para saltar");
-  //   do Output.println();
-  //   do Output.printString("'q' para salir");
+  method void displayInstructions()
+  {
+    do Output.moveCursor(0, 0);
+    do Output.printString("Flappy Bird Simple");
+    do Output.println();
+    do Output.printString("Espacio para saltar");
+    do Output.println();
 
-  //   return;
-  // }
+    return;
+  }
 
   /*
   Bucle principal del juego.
@@ -53,7 +52,7 @@ class FlappyBirdGame
      do initializeGameState();
      do waitForGameToStart();
      let last_key = 32;
-     while (~(key = 81)) { // tecla 'q'
+     while (true) {
 
         // Determina si ha ocurrido un nuevo salto.
         if ((key = 32) & ~(last_key = 32)) {      // barra espaciadora
@@ -61,14 +60,13 @@ class FlappyBirdGame
           do bird.moveUp();
         } else {
           do updateBirdFallState();
-          //do updateBirdWingState();
         }
 
         // Si hay colisión, reiniciar el juego
         if (findCollision()) {
           do whiteout();
           do Output.moveCursor(10, 25);
-          //do Output.printString("Game Over!");
+          do Output.printString("Game Over!");
           do Sys.wait(3000);
           do initializeGameState();
           do waitForGameToStart();
@@ -113,7 +111,7 @@ class FlappyBirdGame
     let i = 0;
 
     do whiteout();
-    //do displayInstructions();
+    do displayInstructions();
 
     let bird = FlappyBird.new(bird_height_default);
 
