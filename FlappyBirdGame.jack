@@ -13,6 +13,8 @@ class FlappyBirdGame
   field int dist_between_pipes;           // Intervalo entre tuberías.
   field int dist_after_last_pipe;         // Espacio tras la última tubería creada.
   field int jumps;                        // Número de saltos realizados.
+  field int score;                        // Puntuación (tuberías atravesadas)
+  field Array passed_pipes;               // Control de tuberías ya contabilizadas
 
   /*
   Constructor del juego Flappy Bird.
@@ -20,10 +22,12 @@ class FlappyBirdGame
   constructor FlappyBirdGame new() {
     let bird_height_default = 150;
     let pipes = Array.new(10);
+    let passed_pipes = Array.new(10); // Creamos un array para controlar las tuberías pasadas
     let count_pipes = 0;
     let dist_between_pipes = 100;
     let dist_after_last_pipe = 0;
     let jumps = 1;
+    let score = 0; // Inicializamos la puntuación a 0
 
     return this;
   }
@@ -38,6 +42,19 @@ class FlappyBirdGame
     do Output.println();
     do Output.printString("Espacio para saltar");
     do Output.println();
+
+    return;
+  }
+
+  /*
+  Muestra la puntuación actual en pantalla.
+  */
+  method void displayScore()
+  {
+    do Output.moveCursor(3, 0);
+    do Output.printString("Puntos: ");
+    do Output.printInt(score);
+    do Output.printString("  ");  // Espacio extra para borrar dígitos anteriores
 
     return;
   }
@@ -62,11 +79,20 @@ class FlappyBirdGame
           do updateBirdFallState();
         }
 
+        // Actualizar puntuación cuando el pájaro pasa una tubería
+        do updateScore();
+        
+        // Mostrar puntuación actual
+        do displayScore();
+
         // Si hay colisión, reiniciar el juego
         if (findCollision()) {
           do whiteout();
           do Output.moveCursor(10, 25);
           do Output.printString("Game Over!");
+          do Output.moveCursor(12, 25);
+          do Output.printString("Puntos: ");
+          do Output.printInt(score);
           do Sys.wait(3000);
           do initializeGameState();
           do waitForGameToStart();
@@ -81,6 +107,29 @@ class FlappyBirdGame
         do Sys.wait(10);
     }
 
+    return;
+  }
+
+  /*
+  Actualiza la puntuación cuando el pájaro pasa una tubería.
+  */
+  method void updateScore() {
+    var int i;
+    var Pipe pipe;
+    
+    let i = 0;
+    while (i < count_pipes) {
+      let pipe = pipes[i];
+      
+      // Si el pájaro ha sobrepasado la tubería y aún no se ha contabilizado
+      if ((pipe.getXOffset() + pipe.getWidthCurrent() < bird.getXOffset()) & (passed_pipes[i] = 0)) {
+        let score = score + 1;
+        let passed_pipes[i] = 1; // Marcar como contabilizada
+      }
+      
+      let i = i + 1;
+    }
+    
     return;
   }
 
@@ -114,6 +163,7 @@ class FlappyBirdGame
     do displayInstructions();
 
     let bird = FlappyBird.new(bird_height_default);
+    let score = 0; // Reiniciamos el puntaje
 
     // Elimina las tuberías existentes.
     while (i < count_pipes) {
@@ -126,6 +176,13 @@ class FlappyBirdGame
     let bird_wing_state_count = 1;
     let bird_fall_count = 1;
     let dist_after_last_pipe = dist_between_pipes;
+    
+    // Reiniciar el array de control de tuberías pasadas
+    let i = 0;
+    while (i < 10) {
+      let passed_pipes[i] = 0;
+      let i = i + 1;
+    }
 
     return;
   }
@@ -198,7 +255,7 @@ class FlappyBirdGame
   */
   method void disposeUnseenPipe()
   {
-    var int i;
+    var int i, j;
     var Pipe pipe;
 
     if (count_pipes = 0) {
@@ -210,11 +267,17 @@ class FlappyBirdGame
     if (pipe.getWidthCurrent() < 1) {
       do pipe.dispose();
       let count_pipes = count_pipes - 1;
+      
+      // Mover todas las tuberías y sus estados en el array
       let i = 0;
       while (i < count_pipes) {
         let pipes[i] = pipes[i+1];
+        let passed_pipes[i] = passed_pipes[i+1];
         let i = i + 1;
       }
+      
+      // Asegurarse que la última posición esté limpia
+      let passed_pipes[count_pipes] = 0;
     }
 
     return;
@@ -229,6 +292,7 @@ class FlappyBirdGame
 
     if (dist_after_last_pipe = dist_between_pipes) {
       let pipes[count_pipes] = Pipe.new(jumps);
+      let passed_pipes[count_pipes] = 0; // Marcamos la nueva tubería como no pasada
       let count_pipes = count_pipes + 1;
       let dist_after_last_pipe = 0;
     } else {
@@ -311,6 +375,7 @@ class FlappyBirdGame
     }
 
     do bird.dispose();
+    do Memory.deAlloc(passed_pipes);
     do Memory.deAlloc(this);
 
     return;
